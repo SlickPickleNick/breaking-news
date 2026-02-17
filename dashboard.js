@@ -7,8 +7,11 @@ const BASE_OVERLAY_URL =
 // Defaults (appearance only — NOT message content)
 const DEFAULTS = {
   headerText: "BREAKING",
+  headerFlash: "off",
+
   headerBg: "#C80000",
   headerBgA: 0.95,
+
   headerTextColor: "#FFFFFF",
   headerTextA: 1.0,
 
@@ -30,6 +33,8 @@ const el = {
   loadSettingsBtn: document.getElementById("loadSettingsBtn"),
 
   headerText: document.getElementById("headerText"),
+  headerFlash: document.getElementById("headerFlash"),
+
   headerBg: document.getElementById("headerBg"),
   headerBgA: document.getElementById("headerBgA"),
   headerTextColor: document.getElementById("headerTextColor"),
@@ -56,6 +61,8 @@ const el = {
 function getStateFromUI() {
   return {
     headerText: el.headerText.value.trim() || DEFAULTS.headerText,
+    headerFlash: el.headerFlash.value,
+
     headerBg: el.headerBg.value,
     headerBgA: Number(el.headerBgA.value),
 
@@ -76,8 +83,9 @@ function getStateFromUI() {
 function buildOverlayUrl(state) {
   const url = new URL(BASE_OVERLAY_URL);
 
-  // appearance keys expected by overlay.js
+  // appearance keys expected by overlay/overlay.js
   url.searchParams.set("header", state.headerText);
+  url.searchParams.set("flash", state.headerFlash);
   url.searchParams.set("font", state.fontFamily);
 
   url.searchParams.set("hbg", state.headerBg);
@@ -109,11 +117,7 @@ async function copyGeneratedUrl() {
 
   try {
     await navigator.clipboard.writeText(text);
-    // visual feedback
-    el.copyUrlBtn.classList.add("copied");
-    setTimeout(() => el.copyUrlBtn.classList.remove("copied"), 900);
   } catch {
-    // fallback
     const ta = document.createElement("textarea");
     ta.value = text;
     document.body.appendChild(ta);
@@ -125,6 +129,8 @@ async function copyGeneratedUrl() {
 
 function applyDefaults() {
   el.headerText.value = DEFAULTS.headerText;
+  el.headerFlash.value = DEFAULTS.headerFlash;
+
   el.headerBg.value = DEFAULTS.headerBg;
   el.headerBgA.value = String(DEFAULTS.headerBgA);
 
@@ -154,6 +160,7 @@ function loadSettingsFromUrl(inputUrl) {
 
   // Only load known appearance settings
   if (p.get("header")) el.headerText.value = p.get("header");
+  if (p.get("flash")) el.headerFlash.value = p.get("flash");
 
   if (p.get("font")) el.fontFamily.value = p.get("font");
 
@@ -174,7 +181,6 @@ function loadSettingsFromUrl(inputUrl) {
 }
 
 // Preview-only helper: inject a message into the preview iframe without changing the URL.
-// This does NOT affect OBS usage. It is only to visualize layout.
 function applyTestMessageToPreview() {
   const msg = (el.testMessage.value || "").trim();
   const frame = el.previewFrame;
@@ -194,6 +200,7 @@ function applyTestMessageToPreview() {
 // Wire events
 [
   el.headerText,
+  el.headerFlash,
   el.headerBg,
   el.headerBgA,
   el.headerTextColor,
@@ -217,12 +224,7 @@ el.loadSettingsBtn.addEventListener("click", () => {
   el.loadSettingsDialog.showModal();
 });
 
-el.loadSettingsDialog.addEventListener("close", () => {
-  // no-op
-});
-
-el.confirmLoadSettings.addEventListener("click", (e) => {
-  // form will close automatically; read value after close event? easiest: read now
+el.confirmLoadSettings.addEventListener("click", () => {
   const val = el.settingsUrlInput.value.trim();
   if (!val) return;
   loadSettingsFromUrl(val);
@@ -230,10 +232,5 @@ el.confirmLoadSettings.addEventListener("click", (e) => {
 
 el.applyTestMessageBtn.addEventListener("click", applyTestMessageToPreview);
 
-// Initial state
+// Initial
 applyDefaults();
-
-// Receive preview-only messages in overlay iframe (optional convenience)
-window.addEventListener("message", (evt) => {
-  // no-op for dashboard itself
-});

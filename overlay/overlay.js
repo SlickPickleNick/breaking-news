@@ -1,50 +1,10 @@
 // ========================
-// Overlay config (from URL)
+// Helpers
 // ========================
 function clamp01(n) {
   const x = Number(n);
   if (!Number.isFinite(x)) return 1;
   return Math.max(0, Math.min(1, x));
-}
-
-function applyConfigFromUrl() {
-  const url = new URL(window.location.href);
-  const p = url.searchParams;
-
-  const headerText = p.get("header");
-  if (headerTextEl && headerText) headerTextEl.textContent = headerText;
-
-  const font = p.get("font");
-  if (font) document.documentElement.style.fontFamily = font;
-
-  // Colors (hex + alpha)
-  const headerBg = p.get("hbg");
-  const headerBgA = clamp01(p.get("hbgA"));
-  if (headerBg && barEl) {
-    const c = hexToRgb(headerBg);
-    if (c) headerEl.style.background = `rgba(${c.r}, ${c.g}, ${c.b}, ${headerBgA})`;
-  }
-
-  const barBg = p.get("bbg");
-  const barBgA = clamp01(p.get("bbgA"));
-  if (barBg && barEl) {
-    const c = hexToRgb(barBg);
-    if (c) barEl.style.background = `rgba(${c.r}, ${c.g}, ${c.b}, ${barBgA})`;
-  }
-
-  const txt = p.get("txt");
-  const txtA = clamp01(p.get("txtA"));
-  if (txt && tickerTextEl) {
-    const c = hexToRgb(txt);
-    if (c) tickerTextEl.style.color = `rgba(${c.r}, ${c.g}, ${c.b}, ${txtA})`;
-  }
-
-  const htxt = p.get("htxt");
-  const htxtA = clamp01(p.get("htxtA"));
-  if (htxt && headerTextEl) {
-    const c = hexToRgb(htxt);
-    if (c) headerTextEl.style.color = `rgba(${c.r}, ${c.g}, ${c.b}, ${htxtA})`;
-  }
 }
 
 function hexToRgb(hex) {
@@ -60,8 +20,9 @@ function hexToRgb(hex) {
 // ========================
 // Streamer.bot WS Settings
 // ========================
-const STREAMERBOT_WS_URL = "ws://127.0.0.1:8080"; // change if needed
+const STREAMERBOT_WS_URL = "ws://127.0.0.1:8080"; // change port if needed
 
+// Custom event names (must match your SB v1.0.4 C# broadcasts)
 const EVT_SET_TEXT = "SetBreakingScrollingText";
 const EVT_SET_VISIBLE = "SetBreakingVisible";
 
@@ -97,7 +58,7 @@ function clearAutoHide() {
 
 /**
  * durationMs rules:
- * - durationMs > 0: after duration, hide bar AND clear text
+ * - durationMs > 0: hide bar AND clear text when timer expires
  * - durationMs <= 0 or missing: indefinite
  */
 function scheduleAutoHide(durationMs) {
@@ -106,7 +67,6 @@ function scheduleAutoHide(durationMs) {
   const ms = Number(durationMs);
   if (Number.isFinite(ms) && ms > 0) {
     hideTimer = setTimeout(() => {
-      // REQUIRED: hide AND clear text on timeout
       setBarVisible(false);
       setTickerText("");
       hideTimer = null;
@@ -114,15 +74,63 @@ function scheduleAutoHide(durationMs) {
   }
 }
 
-// Hide on load
+// Start hidden/cleared
 setBarVisible(false);
 setTickerText("");
 
+// ========================
 // Apply appearance config from URL params
+// ========================
+function applyConfigFromUrl() {
+  const url = new URL(window.location.href);
+  const p = url.searchParams;
+
+  const headerText = p.get("header");
+  if (headerTextEl && headerText) headerTextEl.textContent = headerText;
+
+  const flash = p.get("flash");
+  if (headerEl) headerEl.classList.toggle("flash", flash === "on");
+
+  const font = p.get("font");
+  if (font) document.documentElement.style.fontFamily = font;
+
+  // Header bg + alpha
+  const hbg = p.get("hbg");
+  const hbgA = clamp01(p.get("hbgA"));
+  if (hbg && headerEl) {
+    const c = hexToRgb(hbg);
+    if (c) headerEl.style.background = `rgba(${c.r}, ${c.g}, ${c.b}, ${hbgA})`;
+  }
+
+  // Header text color + alpha
+  const htxt = p.get("htxt");
+  const htxtA = clamp01(p.get("htxtA"));
+  if (htxt && headerTextEl) {
+    const c = hexToRgb(htxt);
+    if (c) headerTextEl.style.color = `rgba(${c.r}, ${c.g}, ${c.b}, ${htxtA})`;
+  }
+
+  // Bar bg + alpha
+  const bbg = p.get("bbg");
+  const bbgA = clamp01(p.get("bbgA"));
+  if (bbg && barEl) {
+    const c = hexToRgb(bbg);
+    if (c) barEl.style.background = `rgba(${c.r}, ${c.g}, ${c.b}, ${bbgA})`;
+  }
+
+  // Ticker text color + alpha
+  const txt = p.get("txt");
+  const txtA = clamp01(p.get("txtA"));
+  if (txt && tickerTextEl) {
+    const c = hexToRgb(txt);
+    if (c) tickerTextEl.style.color = `rgba(${c.r}, ${c.g}, ${c.b}, ${txtA})`;
+  }
+}
+
 applyConfigFromUrl();
 
 // ========================
-// WebSocket connect
+// WebSocket connect (SB v1.0.4 broadcast)
 // ========================
 let ws = null;
 let reconnectTimer = null;
@@ -136,8 +144,7 @@ function connect() {
   ws = new WebSocket(STREAMERBOT_WS_URL);
 
   ws.onopen = () => {
-    // v1.0.4 broadcast does not require subscription handshake
-    // (messages arrive via WebsocketBroadcastJson)
+    // Using WebsocketBroadcastJson in SB v1.0.4 — no subscribe handshake required.
   };
 
   ws.onmessage = (evt) => {
@@ -148,6 +155,11 @@ function connect() {
       return;
     }
 
+    // Expected envelope from your v1.0.4 C#:
+    // {
+    //   "event": { "source":"Custom","type":"Event","name":"SetBreakingScrollingText" },
+    //   "data": { ... }
+    // }
     const eventName = msg?.event?.name;
     const payload = msg?.data ?? {};
 
@@ -167,7 +179,6 @@ function connect() {
       setBarVisible(visible);
 
       if (!visible) {
-        // When manually hidden, also clear + cancel timers (prevents stale state)
         clearAutoHide();
         setTickerText("");
       }
@@ -186,3 +197,15 @@ function connect() {
 }
 
 connect();
+
+// ========================
+// Dashboard preview support (does not affect OBS usage)
+// ========================
+window.addEventListener("message", (evt) => {
+  const m = evt?.data;
+  if (m?.type === "BN_PREVIEW_SET_TEXT") {
+    setTickerText(m.text || "");
+    setBarVisible(true);
+    scheduleAutoHide(0); // preview: indefinite
+  }
+});

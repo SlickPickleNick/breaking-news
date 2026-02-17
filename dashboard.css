@@ -14,9 +14,10 @@
 html, body {
   margin: 0;
   height: 100%;
-  background: radial-gradient(1200px 600px at 20% 0%, rgba(78, 140, 255, 0.20), transparent),
-              radial-gradient(900px 500px at 80% 20%, rgba(255, 78, 130, 0.15), transparent),
-              var(--bg);
+  background:
+    radial-gradient(1200px 600px at 20% 0%, rgba(78, 140, 255, 0.20), transparent),
+    radial-gradient(900px 500px at 80% 20%, rgba(255, 78, 130, 0.15), transparent),
+    var(--bg);
   color: var(--text);
   font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
 }
@@ -25,14 +26,24 @@ html, body {
   height: 60px;
   padding: 10px;
   display: flex;
-  align-items: center;
+  align-items: center;            /* vertically centered */
   justify-content: space-between;
+  gap: 10px;
 }
 
-.topbar-left, .topbar-right {
+.topbar-left {
   display: flex;
-  align-items: center;
+  align-items: center;            /* vertically centered */
   gap: 10px;
+  flex: 1 1 auto;                 /* allow stretching */
+  min-width: 0;                   /* required for flex children to shrink/ellipsis */
+}
+
+.topbar-right {
+  display: flex;
+  align-items: center;            /* vertically centered */
+  gap: 10px;
+  flex: 0 0 auto;
 }
 
 .brand-logo {
@@ -41,6 +52,7 @@ html, body {
   border-radius: 10px;
   object-fit: cover;
   border: 1px solid var(--stroke);
+  flex: 0 0 auto;
 }
 
 .topbar-btn {
@@ -55,6 +67,7 @@ html, body {
   display: inline-flex;
   align-items: center;
   text-decoration: none;
+  white-space: nowrap;
 }
 
 .topbar-btn:hover {
@@ -70,21 +83,29 @@ html, body {
   color: var(--text);
   font-size: 14px;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
 }
 
 .primary-btn:hover {
   background: rgba(120, 180, 255, 0.24);
 }
 
+/* Click-to-copy URL (stretches) */
 .copy-url {
   height: 40px;
   flex: 1 1 auto;
-  min-width: 420px;
+  min-width: 0;
   border: 1px solid var(--stroke);
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.05);
   cursor: pointer;
   padding: 0;
+}
+
+.copy-url:hover {
+  background: rgba(255, 255, 255, 0.07);
 }
 
 .copy-url-inner {
@@ -98,29 +119,31 @@ html, body {
 .copy-url-blur {
   position: absolute;
   inset: 0;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  background: rgba(0,0,0,0.18);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  background: rgba(0, 0, 0, 0.22);
 }
 
-.copy-url-text {
+.copy-url-content {
   position: relative;
   height: 100%;
   padding: 0 14px;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: center;        /* vertically centered */
   gap: 2px;
+  text-align: center;             /* center label/value horizontally */
 }
 
 .copy-url-label {
   font-size: 12px;
-  color: var(--muted);
+  color: var(--muted);            /* same “tone” as other buttons */
+  opacity: 1;
 }
 
 .copy-url-value {
   font-size: 13px;
-  color: rgba(255,255,255,0.80);
+  color: rgba(255, 255, 255, 0.80);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;

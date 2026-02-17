@@ -24,7 +24,7 @@ body {
   background: rgba(0, 0, 0, 0.65);
 }
 
-/* ===== Header ===== */
+/* ===== Header (left block) ===== */
 .bn-header {
   flex: 0 0 auto;
   display: flex;
@@ -33,9 +33,10 @@ body {
 
   background: rgba(200, 0, 0, 0.95);
 
-  /* required padding */
+  /* Padding requirement: 20px around all sides */
   padding: 20px;
 
+  /* Clean rectangle */
   border-radius: 0;
 }
 
@@ -49,11 +50,23 @@ body {
   white-space: nowrap;
 }
 
-/* ===== Ticker ===== */
+/* Flash pulse */
+@keyframes bnPulse {
+  0%   { filter: brightness(1); }
+  50%  { filter: brightness(1.35); }
+  100% { filter: brightness(1); }
+}
+
+.bn-header.flash {
+  animation: bnPulse 1s ease-in-out infinite;
+}
+
+/* ===== Ticker (scrolling area) ===== */
 .bn-ticker {
   flex: 1 1 auto;
   display: flex;
   align-items: center;
+
   background: rgba(20, 20, 20, 0.85);
 }
 
@@ -67,6 +80,7 @@ body {
   align-items: center;
 }
 
+/* Track is where your existing scrolling system can animate translateX */
 .bn-ticker-track {
   position: absolute;
   left: 100%;

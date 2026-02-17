@@ -16,14 +16,20 @@
           alt="SlickPickleNick"
         />
 
-        <a class="topbar-btn" href="https://slickpicklenick.live/collections/streaming-tools" target="_blank" rel="noreferrer">
+        <a
+          class="topbar-btn"
+          href="https://slickpicklenick.live/collections/streaming-tools"
+          target="_blank"
+          rel="noreferrer"
+        >
           Streaming Tools
         </a>
 
+        <!-- Click-to-copy URL area stretches to the right edge of the left cluster -->
         <button id="copyUrlBtn" class="copy-url" type="button" title="Click to copy URL">
           <div class="copy-url-inner">
             <div class="copy-url-blur" aria-hidden="true"></div>
-            <div class="copy-url-text">
+            <div class="copy-url-content">
               <div class="copy-url-label">Click to copy URL</div>
               <div id="generatedUrl" class="copy-url-value"></div>
             </div>
@@ -47,6 +53,14 @@
           <label class="field">
             <span>Header Text</span>
             <input id="headerText" type="text" value="BREAKING" />
+          </label>
+
+          <label class="field">
+            <span>Flashing Header</span>
+            <select id="headerFlash">
+              <option value="off">Off</option>
+              <option value="on">On</option>
+            </select>
           </label>
 
           <div class="row">
