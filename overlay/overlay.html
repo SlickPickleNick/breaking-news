@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <link rel="stylesheet" href="overlay.css" />
+</head>
+<body>
+
+  <!-- Streamer.bot connection status (non-intrusive) -->
+  <div id="sbStatus" class="sb-status sb-disconnected" aria-live="polite">
+    Disconnected...
+  </div>
+
+  <div id="bar">
+    <div id="header">
+      <img id="logo" alt="logo" />
+      <span id="headerText">BREAKING NEWS</span>
+    </div>
+
+    <div id="tickerViewport">
+      <div id="tickerText">This is a breaking news alert scrolling across the screen.</div>
+    </div>
+  </div>
+
+  <script src="overlay.js"></script>
+</body>
+</html>
