@@ -1,7 +1,7 @@
 // ============================
 // Replace this when hosted
 // ============================
-const BASE_OVERLAY_URL = "https://slickpicklenick.github.io/breaking-news/overlay/overlay.html";
+const BASE_OVERLAY_URL = "https://YOUR_BASE_URL_HERE/overlay/overlay.html";
 
 let previewActivated = false;
 
