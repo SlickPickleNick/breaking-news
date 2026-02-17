@@ -1,184 +1,188 @@
-let anim = null;
-let currentDuration = 12;
-
-const header = document.getElementById("header");
-const headerText = document.getElementById("headerText");
-const logo = document.getElementById("logo");
-const viewport = document.getElementById("tickerViewport");
-const tickerText = document.getElementById("tickerText");
-const sbStatusEl = document.getElementById("sbStatus");
-const barEl = document.getElementById("bar");
-
-/* ---------- helpers ---------- */
-
-function clampNum(v,min,max,fallback){
-  const n=Number(v);
-  if(Number.isNaN(n)) return fallback;
-  return Math.max(min,Math.min(max,n));
+// ========================
+// Overlay config (from URL)
+// ========================
+function clamp01(n) {
+  const x = Number(n);
+  if (!Number.isFinite(x)) return 1;
+  return Math.max(0, Math.min(1, x));
 }
 
-function hexToRgba(hex,opacity){
-  const r=parseInt(hex.slice(1,3),16);
-  const g=parseInt(hex.slice(3,5),16);
-  const b=parseInt(hex.slice(5,7),16);
-  return `rgba(${r},${g},${b},${opacity})`;
-}
+function applyConfigFromUrl() {
+  const url = new URL(window.location.href);
+  const p = url.searchParams;
 
-function hideBar(){ barEl.classList.add("is-hidden"); }
-function showBar(){ barEl.classList.remove("is-hidden"); }
+  const headerText = p.get("header");
+  if (headerTextEl && headerText) headerTextEl.textContent = headerText;
 
-function startTicker(durationSeconds){
-  if(anim) anim.cancel();
+  const font = p.get("font");
+  if (font) document.documentElement.style.fontFamily = font;
 
-  const vw=viewport.clientWidth;
-  const tw=tickerText.scrollWidth;
-
-  const startX=vw;
-  const endX=-tw;
-
-  const durMs=clampNum(durationSeconds,4,120,12)*1000;
-
-  tickerText.style.transform=`translateX(${startX}px)`;
-
-  anim=tickerText.animate(
-    [
-      {transform:`translateX(${startX}px)`},
-      {transform:`translateX(${endX}px)`}
-    ],
-    {duration:durMs,iterations:Infinity,easing:"linear"}
-  );
-}
-
-/* ---------- apply state ---------- */
-
-function applyState(state){
-
-  headerText.textContent = state.lt || "";
-  tickerText.textContent = state.msg || " ";
-
-  header.classList.toggle("pulse", state.p === "1");
-
-  document.documentElement.style.setProperty(
-    "--header-bg",
-    hexToRgba(state.lc || "#cc0000", state.lo || 1)
-  );
-
-  document.documentElement.style.setProperty(
-    "--ticker-bg",
-    hexToRgba(state.tc || "#111111", state.to || .9)
-  );
-
-  document.documentElement.style.setProperty(
-    "--text-color",
-    hexToRgba(state.xc || "#ffffff", state.xo || 1)
-  );
-
-  if(state.lu){
-    logo.src=state.lu;
-    logo.style.display="block";
+  // Colors (hex + alpha)
+  const headerBg = p.get("hbg");
+  const headerBgA = clamp01(p.get("hbgA"));
+  if (headerBg && barEl) {
+    const c = hexToRgb(headerBg);
+    if (c) headerEl.style.background = `rgba(${c.r}, ${c.g}, ${c.b}, ${headerBgA})`;
   }
 
-  if(state.logo){
-    logo.src=state.logo;
-    logo.style.display="block";
+  const barBg = p.get("bbg");
+  const barBgA = clamp01(p.get("bbgA"));
+  if (barBg && barEl) {
+    const c = hexToRgb(barBg);
+    if (c) barEl.style.background = `rgba(${c.r}, ${c.g}, ${c.b}, ${barBgA})`;
   }
 
-  const size=clampNum(state.ls,20,120,54);
-  logo.style.height=`${size}px`;
+  const txt = p.get("txt");
+  const txtA = clamp01(p.get("txtA"));
+  if (txt && tickerTextEl) {
+    const c = hexToRgb(txt);
+    if (c) tickerTextEl.style.color = `rgba(${c.r}, ${c.g}, ${c.b}, ${txtA})`;
+  }
 
-  currentDuration = clampNum(state.sd,4,120,12);
-
-  requestAnimationFrame(()=>startTicker(currentDuration));
+  const htxt = p.get("htxt");
+  const htxtA = clamp01(p.get("htxtA"));
+  if (htxt && headerTextEl) {
+    const c = hexToRgb(htxt);
+    if (c) headerTextEl.style.color = `rgba(${c.r}, ${c.g}, ${c.b}, ${htxtA})`;
+  }
 }
 
-/* ---------- query ---------- */
-
-function hasMeaningfulQueryConfig(){
-  const q=new URLSearchParams(window.location.search);
-  return q.has("lt") || q.has("msg");
+function hexToRgb(hex) {
+  const h = String(hex || "").trim().replace(/^#/, "");
+  if (h.length !== 6) return null;
+  const r = parseInt(h.slice(0, 2), 16);
+  const g = parseInt(h.slice(2, 4), 16);
+  const b = parseInt(h.slice(4, 6), 16);
+  if (![r, g, b].every(Number.isFinite)) return null;
+  return { r, g, b };
 }
 
-function stateFromQuery(){
-  const q=new URLSearchParams(window.location.search);
+// ========================
+// Streamer.bot WS Settings
+// ========================
+const STREAMERBOT_WS_URL = "ws://127.0.0.1:8080"; // change if needed
 
-  return{
-    lt:q.get("lt"),
-    msg:q.get("msg"),
-    p:q.get("p"),
-    lc:q.get("lc"),
-    lo:q.get("lo"),
-    tc:q.get("tc"),
-    to:q.get("to"),
-    xc:q.get("xc"),
-    xo:q.get("xo"),
-    sd:q.get("sd"),
-    ls:q.get("ls"),
-    lu:q.get("lu")
+const EVT_SET_TEXT = "SetBreakingScrollingText";
+const EVT_SET_VISIBLE = "SetBreakingVisible";
+
+// ========================
+// DOM hooks
+// ========================
+const barEl = document.getElementById("bn-bar");
+const headerEl = document.querySelector(".bn-header");
+const headerTextEl = document.getElementById("bn-header-text");
+const tickerTextEl = document.getElementById("bn-ticker-text");
+
+// ========================
+// State
+// ========================
+let hideTimer = null;
+
+function setBarVisible(visible) {
+  if (!barEl) return;
+  barEl.style.display = visible ? "flex" : "none";
+}
+
+function setTickerText(text) {
+  if (!tickerTextEl) return;
+  tickerTextEl.textContent = String(text ?? "");
+}
+
+function clearAutoHide() {
+  if (hideTimer) {
+    clearTimeout(hideTimer);
+    hideTimer = null;
+  }
+}
+
+/**
+ * durationMs rules:
+ * - durationMs > 0: after duration, hide bar AND clear text
+ * - durationMs <= 0 or missing: indefinite
+ */
+function scheduleAutoHide(durationMs) {
+  clearAutoHide();
+
+  const ms = Number(durationMs);
+  if (Number.isFinite(ms) && ms > 0) {
+    hideTimer = setTimeout(() => {
+      // REQUIRED: hide AND clear text on timeout
+      setBarVisible(false);
+      setTickerText("");
+      hideTimer = null;
+    }, ms);
+  }
+}
+
+// Hide on load
+setBarVisible(false);
+setTickerText("");
+
+// Apply appearance config from URL params
+applyConfigFromUrl();
+
+// ========================
+// WebSocket connect
+// ========================
+let ws = null;
+let reconnectTimer = null;
+
+function connect() {
+  if (reconnectTimer) {
+    clearTimeout(reconnectTimer);
+    reconnectTimer = null;
+  }
+
+  ws = new WebSocket(STREAMERBOT_WS_URL);
+
+  ws.onopen = () => {
+    // v1.0.4 broadcast does not require subscription handshake
+    // (messages arrive via WebsocketBroadcastJson)
+  };
+
+  ws.onmessage = (evt) => {
+    let msg;
+    try {
+      msg = JSON.parse(evt.data);
+    } catch {
+      return;
+    }
+
+    const eventName = msg?.event?.name;
+    const payload = msg?.data ?? {};
+
+    if (eventName === EVT_SET_TEXT) {
+      const text = payload?.text ?? "";
+      const durationMs = payload?.durationMs ?? 0;
+
+      setTickerText(text);
+      setBarVisible(true);
+      scheduleAutoHide(durationMs);
+      return;
+    }
+
+    if (eventName === EVT_SET_VISIBLE) {
+      const visible = Boolean(payload?.visible);
+
+      setBarVisible(visible);
+
+      if (!visible) {
+        // When manually hidden, also clear + cancel timers (prevents stale state)
+        clearAutoHide();
+        setTickerText("");
+      }
+
+      return;
+    }
+  };
+
+  ws.onclose = () => {
+    reconnectTimer = setTimeout(connect, 1000);
+  };
+
+  ws.onerror = () => {
+    // onclose generally follows; reconnect handled there
   };
 }
 
-/* ---------- websocket ---------- */
-
-let socket;
-
-function showDisconnected(){
-  sbStatusEl.className="sb-status sb-disconnected";
-  sbStatusEl.textContent="Disconnected...";
-}
-
-function showConnected(){
-  sbStatusEl.className="sb-status sb-connected";
-  sbStatusEl.textContent="Connected!";
-
-  setTimeout(()=>{
-    sbStatusEl.classList.add("sb-hidden");
-  },2000);
-}
-
-function connect(){
-  socket=new WebSocket("ws://127.0.0.1:8080");
-
-  socket.onopen=showConnected;
-  socket.onclose=showDisconnected;
-  socket.onerror=showDisconnected;
-}
-
-/* ---------- messaging ---------- */
-
-window.addEventListener("message",(e)=>{
-  const d=e.data;
-
-  if(d.type==="update"){
-    applyState({
-      lt:d.labelText,
-      msg:d.message,
-      p:d.pulse?"1":"0",
-      lc:d.labelColor,
-      lo:d.labelOpacity,
-      tc:d.tickerBgColor,
-      to:d.tickerBgOpacity,
-      xc:d.textColor,
-      xo:d.textOpacity,
-      sd:d.scrollDuration,
-      ls:d.logoSize,
-      lu:d.logoUrl,
-      logo:d.logo
-    });
-
-    showBar();
-  }
-});
-
-/* ---------- init ---------- */
-
-hideBar();
-
-if(hasMeaningfulQueryConfig()){
-  applyState(stateFromQuery());
-  showBar();
-}else{
-  startTicker(12);
-}
-
-showDisconnected();
 connect();

@@ -1,167 +1,150 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8" />
-  <title>Breaking News Editor</title>
-  <link rel="stylesheet" href="dashboard.css" />
-</head>
-<body>
-  <div class="app">
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Breaking News Dashboard</title>
+    <link rel="stylesheet" href="./dashboard.css" />
+  </head>
 
-    <!-- Top Bar (Nutty-style layout) -->
+  <body>
     <header class="topbar">
       <div class="topbar-left">
         <img
           class="brand-logo"
-          src="https://static-cdn.jtvnw.net/jtv_user_pictures/dd125871-0ffb-4339-9c01-273ea7114af2-profile_image-70x70.png"
-          alt="Logo"
+          src="https://static-cdn.jtvnw.net/jtv_user_pictures/dd125871-0ffb-4337-9c01-273ea7114af2-profile_image-70x70.png"
+          alt="SlickPickleNick"
         />
-      </div>
-        <a
-          class="topbar-link-btn"
-          href="https://slickpicklenick.live/collections/streaming-tools"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Check out my other stream tools!
+
+        <a class="topbar-btn" href="https://slickpicklenick.live/collections/streaming-tools" target="_blank" rel="noreferrer">
+          Streaming Tools
         </a>
-      <div class="topbar-center">
-        <div class="copy-url" id="copyUrlArea" role="button" tabindex="0" aria-label="Click to copy URL">
-          <div class="copy-url-label">Click to copy URL</div>
-          <div class="copy-url-field">
-            <input id="obsUrl" type="text" readonly value="" />
+
+        <button id="copyUrlBtn" class="copy-url" type="button" title="Click to copy URL">
+          <div class="copy-url-inner">
             <div class="copy-url-blur" aria-hidden="true"></div>
+            <div class="copy-url-text">
+              <div class="copy-url-label">Click to copy URL</div>
+              <div id="generatedUrl" class="copy-url-value"></div>
+            </div>
           </div>
-          <div class="copy-url-toast" id="copyToast" aria-hidden="true">Copied to clipboard!</div>
-        </div>
+        </button>
       </div>
 
       <div class="topbar-right">
-        <button class="btn top" id="defaultsBtn" type="button">Load Default Settings</button>
-        <button class="btn top" id="loadBtn" type="button">Load Settings</button>
+        <button id="loadDefaultsBtn" class="topbar-btn" type="button">Load default settings</button>
+        <button id="loadSettingsBtn" class="topbar-btn" type="button">Load settings</button>
       </div>
     </header>
 
-    <!-- Main layout -->
-    <div class="main">
-      <aside class="sidebar">
-        <div class="brand">
-          <div class="brand-title">Breaking News Overlay Editor</div>
-        </div>
+    <main class="layout">
+      <section class="settings">
+        <h2>Appearance</h2>
 
-        <div class="panel">
-          <div class="section-title">Content</div>
+        <div class="group">
+          <h3>Header</h3>
 
           <label class="field">
             <span>Header Text</span>
-            <input id="labelText" type="text" value="BREAKING NEWS" />
+            <input id="headerText" type="text" value="BREAKING" />
           </label>
 
-          <label class="field">
-            <span>Message (Preview Only)</span>
-            <input id="message" type="text" value="This is a breaking news alert scrolling across the screen." />
-          </label>
-
-          <label class="field checkbox">
-            <span>Flashing Header?</span>
-            <input id="pulse" type="checkbox" />
-          </label>
-        </div>
-
-        <div class="panel">
-          <div class="section-title">Header</div>
-
-          <div class="grid2">
+          <div class="row">
             <label class="field">
-              <span>Header Color</span>
-              <input id="labelColor" type="color" value="#cc0000" />
+              <span>Header Background</span>
+              <input id="headerBg" type="color" value="#C80000" />
             </label>
-
             <label class="field">
-              <span>Header Opacity</span>
-              <input id="labelOpacity" type="range" min="0" max="1" step="0.05" value="1" />
+              <span>Opacity</span>
+              <input id="headerBgA" type="range" min="0" max="1" step="0.01" value="0.95" />
+            </label>
+          </div>
+
+          <div class="row">
+            <label class="field">
+              <span>Header Text Color</span>
+              <input id="headerTextColor" type="color" value="#FFFFFF" />
+            </label>
+            <label class="field">
+              <span>Opacity</span>
+              <input id="headerTextA" type="range" min="0" max="1" step="0.01" value="1" />
             </label>
           </div>
         </div>
 
-        <div class="panel">
-          <div class="section-title">Scrolling Text</div>
+        <div class="group">
+          <h3>Bar</h3>
 
-          <div class="grid2">
+          <div class="row">
             <label class="field">
-              <span>Background</span>
-              <input id="tickerBgColor" type="color" value="#111111" />
+              <span>Bar Background</span>
+              <input id="barBg" type="color" value="#000000" />
             </label>
-
             <label class="field">
-              <span>BG Opacity</span>
-              <input id="tickerBgOpacity" type="range" min="0" max="1" step="0.05" value="0.90" />
-            </label>
-          </div>
-
-          <div class="grid2">
-            <label class="field">
-              <span>Text Color</span>
-              <input id="textColor" type="color" value="#ffffff" />
-            </label>
-
-            <label class="field">
-              <span>Text Opacity</span>
-              <input id="textOpacity" type="range" min="0" max="1" step="0.05" value="1" />
+              <span>Opacity</span>
+              <input id="barBgA" type="range" min="0" max="1" step="0.01" value="0.65" />
             </label>
           </div>
 
           <label class="field">
-            <span>Scroll Duration (seconds)</span>
-            <input id="scrollDuration" type="number" min="4" max="120" value="12" />
+            <span>Font</span>
+            <select id="fontFamily">
+              <option value="system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif">System</option>
+              <option value="Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif">Inter</option>
+              <option value="Montserrat, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif">Montserrat</option>
+              <option value="Oswald, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif">Oswald</option>
+            </select>
           </label>
-        </div>
 
-        <div class="actions">
-          <button class="btn primary" id="applyBtn" type="button">Apply</button>
-          <button class="btn" id="testBtn" type="button">Test</button>
-        </div>
+          <div class="row">
+            <label class="field">
+              <span>Ticker Text Color</span>
+              <input id="tickerTextColor" type="color" value="#FFFFFF" />
+            </label>
+            <label class="field">
+              <span>Opacity</span>
+              <input id="tickerTextA" type="range" min="0" max="1" step="0.01" value="1" />
+            </label>
+          </div>
 
-        <div class="hint">
-          Tip: updates are live while you edit. “Test” restarts the ticker cleanly.
-        </div>
-      </aside>
-
-      <main class="stage">
-        <div class="stage-top">
-          <div class="stage-title">Preview</div>
-        </div>
-
-        <div class="preview-wrap">
-          <div class="preview-frame">
-            <iframe id="preview" src="overlay/overlay.html"></iframe>
+          <div class="note">
+            The scrolling message is controlled by Streamer.bot (not saved into the URL).
           </div>
         </div>
-      </main>
-    </div>
 
-    <!-- Load Settings Modal -->
-    <div class="modal-backdrop" id="modalBackdrop" aria-hidden="true">
-      <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
-        <div class="modal-title" id="modalTitle">Load Settings</div>
-        <div class="modal-sub">Paste a previously generated overlay URL to restore settings.</div>
+        <div class="group">
+          <h3>Preview Tools</h3>
 
-        <label class="field">
-          <span>Overlay URL</span>
-          <input id="loadUrlInput" type="text" placeholder="https://YOUR_BASE_URL_HERE/overlay/overlay.html?lt=...&msg=..." />
-        </label>
+          <label class="field">
+            <span>Test message (preview only)</span>
+            <input id="testMessage" type="text" placeholder="This does NOT get added to the URL" />
+          </label>
 
-        <div class="modal-actions">
-          <button class="btn" id="cancelLoadBtn" type="button">Cancel</button>
-          <button class="btn primary" id="confirmLoadBtn" type="button">Load</button>
+          <button id="applyTestMessageBtn" class="primary-btn" type="button">
+            Apply test message to preview
+          </button>
         </div>
+      </section>
 
-        <div class="modal-hint" id="modalHint"></div>
-      </div>
-    </div>
+      <section class="preview">
+        <div class="preview-frame">
+          <iframe id="previewFrame" title="Overlay Preview" allow="clipboard-write"></iframe>
+        </div>
+      </section>
+    </main>
 
-  </div>
+    <dialog id="loadSettingsDialog" class="dialog">
+      <form method="dialog" class="dialog-card">
+        <h3>Load settings</h3>
+        <p>Paste a previously generated overlay URL to load its appearance settings.</p>
+        <input id="settingsUrlInput" type="text" placeholder="Paste overlay URL here..." />
+        <div class="dialog-actions">
+          <button value="cancel" class="topbar-btn" type="submit">Cancel</button>
+          <button id="confirmLoadSettings" value="ok" class="primary-btn" type="submit">Load</button>
+        </div>
+      </form>
+    </dialog>
 
-  <script src="dashboard.js"></script>
-</body>
+    <script src="./dashboard.js"></script>
+  </body>
 </html>

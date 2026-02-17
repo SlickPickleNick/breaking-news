@@ -1,315 +1,239 @@
-// ============================
-// Replace this when hosted
-// ============================
-const BASE_OVERLAY_URL = "https://YOUR_BASE_URL_HERE/overlay/overlay.html";
+// ==============================
+// GitHub Pages overlay base URL
+// ==============================
+const BASE_OVERLAY_URL =
+  "https://slickpicklenick.github.io/breaking-news/overlay/overlay.html";
 
-let previewActivated = false;
-
-// Defaults (used by "Load Default Settings")
+// Defaults (appearance only — NOT message content)
 const DEFAULTS = {
-  labelText: "BREAKING NEWS",
-  message: "This is a breaking news alert scrolling across the screen.",
-  pulse: false,
+  headerText: "BREAKING",
+  headerBg: "#C80000",
+  headerBgA: 0.95,
+  headerTextColor: "#FFFFFF",
+  headerTextA: 1.0,
 
-  labelColor: "#cc0000",
-  labelOpacity: 1,
+  barBg: "#000000",
+  barBgA: 0.65,
 
-  tickerBgColor: "#111111",
-  tickerBgOpacity: 0.90,
+  tickerTextColor: "#FFFFFF",
+  tickerTextA: 1.0,
 
-  textColor: "#ffffff",
-  textOpacity: 1,
-
-  scrollDuration: 12
+  fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif",
 };
 
-const $ = (id) => document.getElementById(id);
+// Elements
+const el = {
+  generatedUrl: document.getElementById("generatedUrl"),
+  copyUrlBtn: document.getElementById("copyUrlBtn"),
 
-function clampNum(v, min, max, fallback){
-  const n = Number(v);
-  if (Number.isNaN(n)) return fallback;
-  return Math.max(min, Math.min(max, n));
-}
+  loadDefaultsBtn: document.getElementById("loadDefaultsBtn"),
+  loadSettingsBtn: document.getElementById("loadSettingsBtn"),
 
-function setControlsFromSettings(s){
-  $("labelText").value = s.labelText ?? DEFAULTS.labelText;
-  $("message").value = s.message ?? DEFAULTS.message;
-  $("pulse").checked = !!s.pulse;
+  headerText: document.getElementById("headerText"),
+  headerBg: document.getElementById("headerBg"),
+  headerBgA: document.getElementById("headerBgA"),
+  headerTextColor: document.getElementById("headerTextColor"),
+  headerTextA: document.getElementById("headerTextA"),
 
-  $("labelColor").value = s.labelColor ?? DEFAULTS.labelColor;
-  $("labelOpacity").value = String(clampNum(s.labelOpacity ?? DEFAULTS.labelOpacity, 0, 1, DEFAULTS.labelOpacity));
+  barBg: document.getElementById("barBg"),
+  barBgA: document.getElementById("barBgA"),
+  fontFamily: document.getElementById("fontFamily"),
+  tickerTextColor: document.getElementById("tickerTextColor"),
+  tickerTextA: document.getElementById("tickerTextA"),
 
-  $("tickerBgColor").value = s.tickerBgColor ?? DEFAULTS.tickerBgColor;
-  $("tickerBgOpacity").value = String(clampNum(s.tickerBgOpacity ?? DEFAULTS.tickerBgOpacity, 0, 1, DEFAULTS.tickerBgOpacity));
+  previewFrame: document.getElementById("previewFrame"),
 
-  $("textColor").value = s.textColor ?? DEFAULTS.textColor;
-  $("textOpacity").value = String(clampNum(s.textOpacity ?? DEFAULTS.textOpacity, 0, 1, DEFAULTS.textOpacity));
+  // Preview tools (not part of URL)
+  testMessage: document.getElementById("testMessage"),
+  applyTestMessageBtn: document.getElementById("applyTestMessageBtn"),
 
-  $("scrollDuration").value = String(clampNum(s.scrollDuration ?? DEFAULTS.scrollDuration, 4, 120, DEFAULTS.scrollDuration));
-}
+  // Load settings dialog
+  loadSettingsDialog: document.getElementById("loadSettingsDialog"),
+  settingsUrlInput: document.getElementById("settingsUrlInput"),
+  confirmLoadSettings: document.getElementById("confirmLoadSettings"),
+};
 
-function getSettings(){
+function getStateFromUI() {
   return {
-    labelText: $("labelText").value,
-    message: $("message").value, // preview/testing only (NOT encoded into URL)
-    pulse: $("pulse").checked ? "1" : "0",
+    headerText: el.headerText.value.trim() || DEFAULTS.headerText,
+    headerBg: el.headerBg.value,
+    headerBgA: Number(el.headerBgA.value),
 
-    labelColor: $("labelColor").value,
-    labelOpacity: String(clampNum($("labelOpacity").value, 0, 1, 1)),
+    headerTextColor: el.headerTextColor.value,
+    headerTextA: Number(el.headerTextA.value),
 
-    tickerBgColor: $("tickerBgColor").value,
-    tickerBgOpacity: String(clampNum($("tickerBgOpacity").value, 0, 1, 0.9)),
+    barBg: el.barBg.value,
+    barBgA: Number(el.barBgA.value),
 
-    textColor: $("textColor").value,
-    textOpacity: String(clampNum($("textOpacity").value, 0, 1, 1)),
+    tickerTextColor: el.tickerTextColor.value,
+    tickerTextA: Number(el.tickerTextA.value),
 
-    scrollDuration: String(clampNum($("scrollDuration").value, 4, 120, 12))
+    fontFamily: el.fontFamily.value,
   };
 }
 
-function buildObsUrl(){
-  const s = getSettings();
-  const params = new URLSearchParams();
+// IMPORTANT: URL builder must NOT include message content.
+function buildOverlayUrl(state) {
+  const url = new URL(BASE_OVERLAY_URL);
 
-  // Keep label text + styling params.
-  params.set("lt", s.labelText);
-  params.set("p", s.pulse);
+  // appearance keys expected by overlay.js
+  url.searchParams.set("header", state.headerText);
+  url.searchParams.set("font", state.fontFamily);
 
-  params.set("lc", s.labelColor);
-  params.set("lo", s.labelOpacity);
+  url.searchParams.set("hbg", state.headerBg);
+  url.searchParams.set("hbgA", String(state.headerBgA));
 
-  params.set("tc", s.tickerBgColor);
-  params.set("to", s.tickerBgOpacity);
+  url.searchParams.set("htxt", state.headerTextColor);
+  url.searchParams.set("htxtA", String(state.headerTextA));
 
-  params.set("xc", s.textColor);
-  params.set("xo", s.textOpacity);
+  url.searchParams.set("bbg", state.barBg);
+  url.searchParams.set("bbgA", String(state.barBgA));
 
-  params.set("sd", s.scrollDuration);
+  url.searchParams.set("txt", state.tickerTextColor);
+  url.searchParams.set("txtA", String(state.tickerTextA));
 
-  // IMPORTANT: Do NOT include msg in the generated URL.
-  // (Message is only for dashboard preview/testing.)
-  return `${BASE_OVERLAY_URL}?${params.toString()}`;
+  return url.toString();
 }
 
-function post(payload){
-  const iframe = $("preview");
-  if (!iframe?.contentWindow) return;
-  iframe.contentWindow.postMessage(payload, "*");
+function refresh() {
+  const state = getStateFromUI();
+  const overlayUrl = buildOverlayUrl(state);
+
+  el.generatedUrl.textContent = overlayUrl;
+  el.previewFrame.src = overlayUrl;
 }
 
-function refreshUrlOnly(){
-  $("obsUrl").value = buildObsUrl();
-}
-
-function activatePreview(){
-  if (previewActivated) return;
-  previewActivated = true;
-  pushPreviewUpdate();
-}
-
-function pushPreviewUpdate(){
-  if (!previewActivated) return;
-
-  const s = getSettings();
-  post({
-    type: "update",
-    labelText: s.labelText,
-    message: s.message, // still used for preview
-    pulse: s.pulse === "1",
-
-    labelColor: s.labelColor,
-    labelOpacity: s.labelOpacity,
-
-    tickerBgColor: s.tickerBgColor,
-    tickerBgOpacity: s.tickerBgOpacity,
-
-    textColor: s.textColor,
-    textOpacity: s.textOpacity,
-
-    scrollDuration: s.scrollDuration
-  });
-}
-
-function apply(){
-  refreshUrlOnly();
-  activatePreview();
-  pushPreviewUpdate();
-}
-
-function test(){
-  apply();
-  post({ type: "test" });
-}
-
-/* -------------------------
-   Copy URL (top bar center)
--------------------------- */
-function showCopyToast(){
-  const t = $("copyToast");
-  t.classList.add("show");
-  t.setAttribute("aria-hidden", "false");
-  setTimeout(() => {
-    t.classList.remove("show");
-    t.setAttribute("aria-hidden", "true");
-  }, 900);
-}
-
-async function copyUrl(){
-  refreshUrlOnly();
-  const url = $("obsUrl").value;
+async function copyGeneratedUrl() {
+  const text = el.generatedUrl.textContent.trim();
+  if (!text) return;
 
   try {
-    await navigator.clipboard.writeText(url);
+    await navigator.clipboard.writeText(text);
+    // visual feedback
+    el.copyUrlBtn.classList.add("copied");
+    setTimeout(() => el.copyUrlBtn.classList.remove("copied"), 900);
   } catch {
-    $("obsUrl").focus();
-    $("obsUrl").select();
+    // fallback
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
     document.execCommand("copy");
+    document.body.removeChild(ta);
   }
-
-  showCopyToast();
 }
 
-/* -------------------------
-   Load Default Settings
--------------------------- */
-function loadDefaults(){
-  const ok = window.confirm("Reset all settings to defaults?");
-  if (!ok) return;
+function applyDefaults() {
+  el.headerText.value = DEFAULTS.headerText;
+  el.headerBg.value = DEFAULTS.headerBg;
+  el.headerBgA.value = String(DEFAULTS.headerBgA);
 
-  setControlsFromSettings(DEFAULTS);
+  el.headerTextColor.value = DEFAULTS.headerTextColor;
+  el.headerTextA.value = String(DEFAULTS.headerTextA);
 
-  refreshUrlOnly();
-  activatePreview();
-  pushPreviewUpdate();
+  el.barBg.value = DEFAULTS.barBg;
+  el.barBgA.value = String(DEFAULTS.barBgA);
+
+  el.tickerTextColor.value = DEFAULTS.tickerTextColor;
+  el.tickerTextA.value = String(DEFAULTS.tickerTextA);
+
+  el.fontFamily.value = DEFAULTS.fontFamily;
+
+  refresh();
 }
 
-/* -------------------------
-   Load Settings (paste URL)
--------------------------- */
-function parseSettingsFromUrl(input){
-  let url;
+function loadSettingsFromUrl(inputUrl) {
+  let u;
   try {
-    url = new URL(input);
+    u = new URL(inputUrl);
   } catch {
-    if (input.trim().startsWith("?")) {
-      url = new URL("https://example.invalid/" + input.trim());
-    } else {
-      throw new Error("Invalid URL");
-    }
+    return false;
   }
 
-  const q = url.searchParams;
+  const p = u.searchParams;
 
-  const s = {
-    labelText: q.get("lt") ?? DEFAULTS.labelText,
+  // Only load known appearance settings
+  if (p.get("header")) el.headerText.value = p.get("header");
 
-    // Backward compatible: if an old URL includes msg, load it into the test field
-    message: q.get("msg") ?? DEFAULTS.message,
+  if (p.get("font")) el.fontFamily.value = p.get("font");
 
-    pulse: (q.get("p") ?? "0") === "1",
+  if (p.get("hbg")) el.headerBg.value = p.get("hbg");
+  if (p.get("hbgA")) el.headerBgA.value = p.get("hbgA");
 
-    labelColor: q.get("lc") ?? DEFAULTS.labelColor,
-    labelOpacity: clampNum(q.get("lo") ?? DEFAULTS.labelOpacity, 0, 1, DEFAULTS.labelOpacity),
+  if (p.get("htxt")) el.headerTextColor.value = p.get("htxt");
+  if (p.get("htxtA")) el.headerTextA.value = p.get("htxtA");
 
-    tickerBgColor: q.get("tc") ?? DEFAULTS.tickerBgColor,
-    tickerBgOpacity: clampNum(q.get("to") ?? DEFAULTS.tickerBgOpacity, 0, 1, DEFAULTS.tickerBgOpacity),
+  if (p.get("bbg")) el.barBg.value = p.get("bbg");
+  if (p.get("bbgA")) el.barBgA.value = p.get("bbgA");
 
-    textColor: q.get("xc") ?? DEFAULTS.textColor,
-    textOpacity: clampNum(q.get("xo") ?? DEFAULTS.textOpacity, 0, 1, DEFAULTS.textOpacity),
+  if (p.get("txt")) el.tickerTextColor.value = p.get("txt");
+  if (p.get("txtA")) el.tickerTextA.value = p.get("txtA");
 
-    scrollDuration: clampNum(q.get("sd") ?? DEFAULTS.scrollDuration, 4, 120, DEFAULTS.scrollDuration)
-  };
-
-  return s;
+  refresh();
+  return true;
 }
 
-function openModal(){
-  $("modalHint").textContent = "";
-  $("loadUrlInput").value = "";
-  $("modalBackdrop").classList.add("show");
-  $("modalBackdrop").setAttribute("aria-hidden", "false");
-  setTimeout(() => $("loadUrlInput").focus(), 0);
-}
+// Preview-only helper: inject a message into the preview iframe without changing the URL.
+// This does NOT affect OBS usage. It is only to visualize layout.
+function applyTestMessageToPreview() {
+  const msg = (el.testMessage.value || "").trim();
+  const frame = el.previewFrame;
 
-function closeModal(){
-  $("modalBackdrop").classList.remove("show");
-  $("modalBackdrop").setAttribute("aria-hidden", "true");
-}
+  if (!frame || !frame.contentWindow) return;
 
-function confirmLoadSettings(){
-  const raw = $("loadUrlInput").value.trim();
-  if (!raw) {
-    $("modalHint").textContent = "Paste a URL first.";
-    return;
-  }
-
-  let parsed;
   try {
-    parsed = parseSettingsFromUrl(raw);
+    frame.contentWindow.postMessage(
+      { type: "BN_PREVIEW_SET_TEXT", text: msg },
+      "*"
+    );
   } catch {
-    $("modalHint").textContent = "That doesn’t look like a valid overlay URL.";
-    return;
+    // ignore
   }
-
-  setControlsFromSettings(parsed);
-
-  closeModal();
-  refreshUrlOnly();
-  activatePreview();
-  pushPreviewUpdate();
 }
 
-/* -------------------------
-   Wiring
--------------------------- */
-$("applyBtn").addEventListener("click", apply);
-$("testBtn").addEventListener("click", test);
+// Wire events
+[
+  el.headerText,
+  el.headerBg,
+  el.headerBgA,
+  el.headerTextColor,
+  el.headerTextA,
+  el.barBg,
+  el.barBgA,
+  el.fontFamily,
+  el.tickerTextColor,
+  el.tickerTextA,
+].forEach((input) => input.addEventListener("input", refresh));
 
-$("defaultsBtn").addEventListener("click", loadDefaults);
-$("loadBtn").addEventListener("click", openModal);
+el.copyUrlBtn.addEventListener("click", copyGeneratedUrl);
 
-$("cancelLoadBtn").addEventListener("click", closeModal);
-$("confirmLoadBtn").addEventListener("click", confirmLoadSettings);
-
-$("modalBackdrop").addEventListener("click", (e) => {
-  if (e.target === $("modalBackdrop")) closeModal();
+el.loadDefaultsBtn.addEventListener("click", () => {
+  const ok = confirm("Are you sure you want to load default settings? This will reset your customizations.");
+  if (ok) applyDefaults();
 });
 
-document.addEventListener("keydown", (e) => {
-  if (e.key === "Escape" && $("modalBackdrop").classList.contains("show")) closeModal();
+el.loadSettingsBtn.addEventListener("click", () => {
+  el.settingsUrlInput.value = "";
+  el.loadSettingsDialog.showModal();
 });
 
-/* Copy area: click or Enter/Space */
-$("copyUrlArea").addEventListener("click", copyUrl);
-$("copyUrlArea").addEventListener("keydown", (e) => {
-  if (e.key === "Enter" || e.key === " ") {
-    e.preventDefault();
-    copyUrl();
-  }
+el.loadSettingsDialog.addEventListener("close", () => {
+  // no-op
 });
 
-/* Live updates */
-const ids = [
-  "labelText","message","pulse",
-  "labelColor","labelOpacity",
-  "tickerBgColor","tickerBgOpacity",
-  "textColor","textOpacity",
-  "scrollDuration"
-];
-
-ids.forEach((id) => {
-  const node = $(id);
-  const evt = node.type === "checkbox" ? "change" : "input";
-  node.addEventListener(evt, () => {
-    refreshUrlOnly();
-    activatePreview();
-    pushPreviewUpdate();
-  });
+el.confirmLoadSettings.addEventListener("click", (e) => {
+  // form will close automatically; read value after close event? easiest: read now
+  const val = el.settingsUrlInput.value.trim();
+  if (!val) return;
+  loadSettingsFromUrl(val);
 });
 
-/* Keep overlay hidden until user interaction; do not auto-apply on iframe load */
-$("preview").addEventListener("load", refreshUrlOnly);
+el.applyTestMessageBtn.addEventListener("click", applyTestMessageToPreview);
 
-/* Init defaults */
-setControlsFromSettings(DEFAULTS);
-refreshUrlOnly();
+// Initial state
+applyDefaults();
+
+// Receive preview-only messages in overlay iframe (optional convenience)
+window.addEventListener("message", (evt) => {
+  // no-op for dashboard itself
+});

@@ -1,23 +1,28 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8" />
-  <link rel="stylesheet" href="overlay.css" />
-</head>
-<body>
-  <!-- Streamer.bot connection status (non-intrusive) -->
-  <div id="sbStatus" class="sb-status sb-disconnected" aria-live="polite">
-    Disconnected...
-  </div>
-  <div id="bar">
-    <div id="header">
-      <img id="logo" alt="logo" />
-      <span id="headerText">BREAKING NEWS</span>
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Breaking News Overlay</title>
+    <link rel="stylesheet" href="./overlay.css" />
+  </head>
+
+  <body>
+    <!-- Hidden by default; shown via Streamer.bot events -->
+    <div id="bn-bar" class="bn-bar" style="display: none;">
+      <div class="bn-header">
+        <span id="bn-header-text" class="bn-header-text">BREAKING</span>
+      </div>
+
+      <div class="bn-ticker">
+        <div class="bn-ticker-clip">
+          <div class="bn-ticker-track">
+            <span id="bn-ticker-text" class="bn-ticker-text"></span>
+          </div>
+        </div>
+      </div>
     </div>
-    <div id="tickerViewport">
-      <div id="tickerText">This is a breaking news alert scrolling across the screen.</div>
-    </div>
-  </div>
-  <script src="overlay.js"></script>
-</body>
+
+    <script src="./overlay.js"></script>
+  </body>
 </html>
