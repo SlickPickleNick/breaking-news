@@ -1,7 +1,25 @@
 // ============================
 // Replace this when hosted
 // ============================
-const BASE_OVERLAY_URL = "https://slickpicklenick.github.io/breaking-news/overlay/overlay.html";
+const DEFAULT_BASE_OVERLAY_URL = "https://slickpicklenick.github.io/breaking-news/overlay/overlay.html";
+
+// Allow optional override via dashboard URL: ?base=https://...
+function getBaseOverlayUrl(){
+  try {
+    const u = new URL(window.location.href);
+    const b = u.searchParams.get("base");
+    if (!b) return DEFAULT_BASE_OVERLAY_URL;
+
+    // Basic validation: must be http(s)
+    const parsed = new URL(b);
+    if (parsed.protocol !== "https:" && parsed.protocol !== "http:") return DEFAULT_BASE_OVERLAY_URL;
+    return parsed.toString();
+  } catch {
+    return DEFAULT_BASE_OVERLAY_URL;
+  }
+}
+
+const BASE_OVERLAY_URL = getBaseOverlayUrl();
 
 let previewActivated = false;
 
